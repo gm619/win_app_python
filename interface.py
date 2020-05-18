@@ -12,7 +12,7 @@ files = []
 fn = ''
 string = ''
 
-def OpenFile(): 
+def OpenFile():
     global fn
     fn = filedialog.askopenfilename(filetypes = [('*.html files', '.html')])
     if fn == '':
@@ -24,10 +24,34 @@ def FindInFile():
     global fn
     file_content = open(fn, 'rt').read()
     soup = BeautifulSoup(file_content, 'html.parser')
-    tag, class_name = start_tag.get().split(',')
-    result = soup.find(tag, class_=class_name).prettify()
-    text_box.delete('1.0', 'end')
-    text_box.insert('1.0', result)
+    
+    # tag, class_name = start_tag.get().split(',')
+    # result = soup.find(tag, class_=class_name).prettify()
+    # text_box.delete('1.0', 'end')
+    # text_box.insert('1.0', result)
+    search_tag = start_tag.get()
+
+    if search_tag:
+        try:
+            tag, class_name = search_tag.split(',')
+            result = soup.find(tag, class_=class_name).prettify()
+            text_box.delete('1.0', 'end')
+            text_box.insert('1.0', result)
+        except ValueError:
+            print("MOLOKO")
+        except AttributeError:
+            print("KOFE")
+        try:
+            tag = search_tag.split(',')
+            print(tag)
+            print("KEFIR")
+            result = soup.find(tag).prettify()
+        except:
+            print("KAKAO")
+    else:
+        text_box.delete('1.0', 'end')
+        text_box.insert('1.0', 'You do not enter "tag"')
+
 
 def StartRemoving():
     if not start_tag.get():
@@ -38,13 +62,15 @@ def StartRemoving():
             if filename.endswith('.html'):
                 file_content = open(filename, 'rt').read()
                 soup = BeautifulSoup(file_content, 'html.parser')
-                tag, class_name = start_tag.get().split(',')    
-                result = soup.find(tag, class_=class_name).prettify()
-                filename+='new.html'
+                tag, class_name = start_tag.get().split(',')   
+                if not class_name:
+                    result = soup.find(tag).prettify()
+                else:
+                    result = soup.find(tag, class_=class_name).prettify()
+                filename = "new_"+filename
                 open(filename, 'wt').write(result)
                 text_box.delete('1.0', 'end')
                 text_box.insert('1.0', "Done")
-
 
 def SaveFile():
     sfn = filedialog.asksaveasfilename(filetypes = [('*.html files', '.html')])
@@ -69,20 +95,13 @@ start_tag_entry.grid(row=1, column=1, columnspan=2)
 
 # description label
 label = Label(app, text='Intag input you write tag first than class after comma, without space')
-label.grid(row=2, column=0, columnspan=2)
+label.grid(row=2, column=0, columnspan=2, sticky=W)
 label2 = Label(app, text='example: "div,related", equal "div class="related""')
 label2.grid(row=3, column=0, columnspan=2, sticky=W)
 
-# end Tag
-# end_tag = StringVar()
-# end_tag_label = Label(app, text='End Tag', font=('bold', 14), pady=20)
-# end_tag_label.grid(row=3, column=0, sticky=W)
-# end_tag_entry = Entry(app, textvariable=end_tag, width=40)
-# end_tag_entry.grid(row=3, column=1, columnspan=2)
-
 # text after serching
 scroll_for_tb = Scrollbar(app)
-scroll_for_tb.grid(row=4, column=3)
+scroll_for_tb.grid(row=4, column=3, sticky=N+S+W)
 
 text_box = Text(app, height=20, border=1)
 text_box.grid(row=4, column=0, columnspan=3, padx=10, pady=10)
@@ -102,9 +121,13 @@ start_button.grid(row=5, column=1)
 save_button = Button(app, text="Save", width=12, command=SaveFile)
 save_button.grid(row=5, column=2)
 
-# button for all files
-all_files_button = Button(app, text="All files", width=12, command=StartRemoving)
-all_files_button.grid(row=6, column=1)
+# button for find child of tag in files
+child_button = Button(app, text="Children tag", width=12)
+child_button.grid(row=6, column=0)
+
+# button for find parent of tag in files
+parent_button = Button(app, text="All files", width=12, command=StartRemoving)
+parent_button.grid(row=6, column=1)
 
 # Quit button
 quit_button = Button(app, text="Quit", width=12, command=Quit)
@@ -113,9 +136,7 @@ quit_button.grid(row=6, column=2)
 app.title('Deparser')
 app.geometry('630x470')
 
-
 app.mainloop()
-
 
 # menubar = Menu(root)
 # filemenu = Menu(menubar, tearoff = 0)
