@@ -7,44 +7,6 @@ from bs4 import BeautifulSoup
 from html.parser import HTMLParser
 from html.entities import name2codepoint
 
-class MyHTMLParser(HTMLParser):
-    def handle_starttag(self, tag, attrs):
-        global string
-        string += "Start tag: {tag} \n"
-        for attr in attrs:
-            string += "     attr: {attr} \n"
-
-        return string
-
-    def handle_endtag(self, tag):
-        global string
-        string += "End tag  : {tag} \n"
-
-        return string
-
-    def handle_data(self, data):
-        global string
-        string += "Data     : {data} \n"
-
-        return string
-
-    def handle_comment(self, data):
-        print("Comment  :", data)
-
-    def handle_entityref(self, name):
-        c = chr(name2codepoint[name])
-        print("Named ent:", c)
-
-    def handle_charref(self, name):
-        if name.startswith('x'):
-            c = chr(int(name[1:], 16))
-        else:
-            c = chr(int(name))
-        print("Num ent  :", c)
-
-    def handle_decl(self, data):
-        print("Decl     :", data)
-
 # file name
 files = []
 fn = ''
@@ -58,23 +20,37 @@ def OpenFile():
     text_box.delete('1.0', 'end') 
     text_box.insert('1.0', open(fn, 'rt').read())
 
+def FindInFile():
+    global fn
+    file_content = open(fn, 'rt').read()
+    soup = BeautifulSoup(file_content, 'html.parser')
+    tag, class_name = start_tag.get().split(',')
+    result = soup.find(tag, class_=class_name).prettify()
+    text_box.delete('1.0', 'end')
+    text_box.insert('1.0', result)
+
 def StartRemoving():
-    for filename in os.listdir():
-        if filename.endswith('.html'):
-            files.append(filename)
-            file_content = open(filename, 'rt').read()
-            soup = BeautifulSoup(file_content, 'html.parser')
-            tag, class_name = start_tag.get().split(',')
-            result = soup.find(tag, class_=class_name).prettify()
-            text_box.delete('1.0', 'end')
-            text_box.insert('1.0', result)
+    if not start_tag.get():
+        text_box.delete('1.0', 'end')
+        text_box.insert('1.0', "tag is empty")
+    else:
+        for filename in os.listdir():
+            if filename.endswith('.html'):
+                file_content = open(filename, 'rt').read()
+                soup = BeautifulSoup(file_content, 'html.parser')
+                tag, class_name = start_tag.get().split(',')    
+                result = soup.find(tag, class_=class_name).prettify()
+                filename+='new.html'
+                open(filename, 'wt').write(result)
+                text_box.delete('1.0', 'end')
+                text_box.insert('1.0', "Done")
 
 
 def SaveFile():
     sfn = filedialog.asksaveasfilename(filetypes = [('*.html files', '.html')])
     if sfn == '':
         return
-    if not fn.endswith(".html"):
+    if not sfn.endswith(".html"):
         sfn+=".html"
     open(sfn, 'wt').write(text_box.get('1.0', 'end'))
 
@@ -94,6 +70,8 @@ start_tag_entry.grid(row=1, column=1, columnspan=2)
 # description label
 label = Label(app, text='Intag input you write tag first than class after comma, without space')
 label.grid(row=2, column=0, columnspan=2)
+label2 = Label(app, text='example: "div,related", equal "div class="related""')
+label2.grid(row=3, column=0, columnspan=2, sticky=W)
 
 # end Tag
 # end_tag = StringVar()
@@ -117,7 +95,7 @@ open_buttom = Button(app, text="Open File", width=12, command=OpenFile)
 open_buttom.grid(row=5, column=0)
 
 # start button
-start_button = Button(app, text="Start", width=12)
+start_button = Button(app, text="Start", width=12, command=FindInFile)
 start_button.grid(row=5, column=1)
 
 # save one file button
@@ -126,7 +104,7 @@ save_button.grid(row=5, column=2)
 
 # button for all files
 all_files_button = Button(app, text="All files", width=12, command=StartRemoving)
-all_files_button.grid(row=6, column=0)
+all_files_button.grid(row=6, column=1)
 
 # Quit button
 quit_button = Button(app, text="Quit", width=12, command=Quit)

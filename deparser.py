@@ -1,62 +1,60 @@
-from tkinter import filedialog
-from tkinter import *
+from html.parser import HTMLParser
+from lxml import html
 
-def Quit(ev):
-    global root
-    root.destroy()
-    
-def OpenFile(ev): 
-    fn = filedialog.askopenfilename(filetypes = [('*.html files', '.html')])
-    if fn == '':
-        return
-    textbox.delete('1.0', 'end') 
-    textbox.insert('1.0', open(fn, 'rt').read())
-    
-def SaveFile(ev):
-    fn = filedialog.asksaveasfilename(filetypes = [('*.txt files', '.txt')])
-    if fn == '':
-        return
-    if not fn.endswith(".txt"):
-        fn+=".txt"
-    open(fn, 'wt').write(textbox.get('1.0', 'end'))
+file = open('documentation.html', 'r').read()
 
-root = Tk()
-
-panelFrame = Frame(root, height = 60, bg = 'gray')
-textFrame = Frame(root, height = 140, width = 600)
-# my frames
-tagsFrame = Frame(root, height = 120, width = 600)
-
-panelFrame.pack(side = 'top', fill = 'x')
-textFrame.pack(side = 'bottom', fill = 'both', expand = 1)
-# my frames packer
-tagsFrame.pack(side = 'top', fill = 'x', expand = 1)
-
-textbox = Text(textFrame, font='Arial 14', wrap='word')
-scrollbar = Scrollbar(textFrame)
-starttagsbox = Entry(tagsFrame, font='Arial 14')
-# starttagsbox = Entry(tagsFrame, textvariable=StringVar())
-endtagsbox = Entry(tagsFrame, textvariable=StringVar())
-
-scrollbar['command'] = textbox.yview
-textbox['yscrollcommand'] = scrollbar.set
+tree = html.fromstring(file)
+allH2 = tree.xpath('//div[@class="related"]')
+print(allH2)
 
 
-textbox.pack(side = 'left', fill = 'both', expand = 1)
-scrollbar.pack(side = 'right', fill = 'y')
-starttagsbox.pack(side='left', fill='none')
-endtagsbox.pack(side='left', fill='none')
+# class MyHTMLParser(HTMLParser):
+#     def handle_starttag(self, tag, attrs):
+#         print("Encountered a start tag:", tag)
 
-loadBtn = Button(panelFrame, text = 'Open File')
-saveBtn = Button(panelFrame, text = 'Save')
-quitBtn = Button(panelFrame, text = 'Quit')
+#     def handle_endtag(self, tag):
+#         print("Encountered an end tag :", tag)
 
-loadBtn.bind("<Button-1>", OpenFile)
-saveBtn.bind("<Button-1>", SaveFile)
-quitBtn.bind("<Button-1>", Quit)
+#     def handle_data(self, data):
+#         print("Encountered some data  :", data)
 
-loadBtn.place(x = 10, y = 10, width = 80, height = 40)
-saveBtn.place(x = 100, y = 10, width = 40, height = 40)
-quitBtn.place(x = 150, y = 10, width = 40, height = 40)
+# parser = MyHTMLParser()
+# parser.feed(file)
 
-root.mainloop()
+class MyHTMLParser(HTMLParser):
+    def handle_starttag(self, tag, attrs):
+        global string
+        string += "Start tag: {tag} \n"
+        for attr in attrs:
+            string += "     attr: {attr} \n"
+
+        return string
+
+    def handle_endtag(self, tag):
+        global string
+        string += "End tag  : {tag} \n"
+
+        return string
+
+    def handle_data(self, data):
+        global string
+        string += "Data     : {data} \n"
+
+        return string
+
+    def handle_comment(self, data):
+        print("Comment  :", data)
+
+    def handle_entityref(self, name):
+        c = chr(name2codepoint[name])
+        print("Named ent:", c)
+
+    def handle_charref(self, name):
+        if name.startswith('x'):
+            c = chr(int(name[1:], 16))
+        else:
+            c = chr(int(name))
+        print("Num ent  :", c)
+
+    def handle_decl(self, data):
+        print("Decl     :", data)
